@@ -1,8 +1,15 @@
 import React, { Component } from "react";
+import axios from "axios";
 
 import classnames from "classnames";
 import Loading from "./Loading";
 import Panel from "./Panel";
+import {
+	getTotalInterviews,
+	getLeastPopularTimeSlot,
+	getMostPopularDay,
+	getInterviewsPerDay
+} from "helpers/selectors";
 
 const data = [
 	{
@@ -29,12 +36,27 @@ const data = [
 
 class Dashboard extends Component {
 	state = {
-		loading: false,
-		focused: null
+		loading: true,
+		focused: null,
+		days: [],
+		appointments: {},
+		interviewers: {}
 	};
 
 	componentDidMount() {
-		const focused = JSON.parse(localStorage.getItem("focused"));
+    const focused = JSON.parse(localStorage.getItem("focused"));
+    Promise.all([
+			axios.get("/api/days"),
+			axios.get("/api/appointments"),
+			axios.get("/api/interviewers")
+		]).then(([days, appointments, interviewers]) => {
+			this.setState({
+				loading: false,
+				days: days.data,
+				appointments: appointments.data,
+				interviewers: interviewers.data
+			});
+		});
 
 		if (focused) {
 			this.setState({ focused });
@@ -59,6 +81,8 @@ class Dashboard extends Component {
 		});
 
 		if (this.state.loading) {
+			// console.log(this.state);
+
 			return <Loading />;
 		}
 
